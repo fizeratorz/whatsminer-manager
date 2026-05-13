@@ -9,17 +9,13 @@ services:
       - "5000:5000"
     environment:
       - ADMIN_USER=${ADMIN_USER:-admin}
-      - ADMIN_HASH=${ADMIN_HASH:-}  # Сгенерируйте через: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('пароль'))"
-      - SECRET_KEY=${SECRET_KEY:-}   # Сгенерируйте: python -c "import secrets; print(secrets.token_hex(32))"
+      - ADMIN_HASH=${ADMIN_HASH:-}
+      - SECRET_KEY=${SECRET_KEY:-}
     volumes:
-      # Если нужно монтировать конфиг с майнерами отдельно:
-      # - ./config.py:/app/config.py:ro
-      - ./logs:/app/logs  # Для логов, если добавите файловый хендлер
+      - ./config:/app/config  # ← Конфиги сохраняются на хосте!
+      - ./logs:/app/logs
     networks:
       - miners-net
-    # Если майнеры в другой подсети — можно добавить:
-    # extra_hosts:
-    #   - "miner-host:192.168.105.34"
 
 networks:
   miners-net:
