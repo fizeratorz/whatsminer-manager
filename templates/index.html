@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛏️ Whatsminer Manager</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --border: #cbd5e1;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 16px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        h1 { margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-size: 1.5em; flex-wrap: wrap; }
+        .subtitle { color: #64748b; font-size: 0.6em; font-weight: normal; }
+        .btn-logout { margin-left:auto; font-size:0.8em; color:#64748b; text-decoration:none; background:#f1f5f9; padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; }
+        .btn-logout:hover { background:#e2e8f0; }
+        
+        .action-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        
+        .location-group { margin-bottom: 24px; }
+        .group-header {
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            user-select: none;
+        }
+        .group-header:hover { background: #f8fafc; }
+        .group-name { font-weight: 700; font-size: 1.1em; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .group-stats { font-size: 0.85em; color: #64748b; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; }
+        .group-toggle { transition: transform 0.2s; color: #64748b; }
+        .group-header.collapsed .group-toggle { transform: rotate(-90deg); }
+        .group-content { overflow: hidden; transition: max-height 0.3s ease; max-height: 5000px; }
+        .group-content.collapsed { max-height: 0; }
+        
+        .miner-card {
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .miner-card.has-errors { border-left: 4px solid var(--danger); }
+        
+        .miner-header {
+            padding: 14px 16px;
+            display: grid;
+            grid-template-columns: 1.5fr repeat(3, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .miner-header:hover { background: #f8fafc; }
+        
+        .miner-name { font-weight: 700; font-size: 1.05em; }
+        .miner-name small { display: block; color: #64748b; font-weight: 500; font-size: 0.8em; margin-top: 2px; }
+        
+        .stat-badge {
+            text-align: center;
+            padding: 8px 6px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-badge .label { display: block; color: #64748b; font-size: 0.7em; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-badge .value { font-weight: 700; font-size: 1em; color: #0f172a; }
+        
+        .fans-display { display: flex; flex-direction: column; gap: 2px; font-size: 0.85em; }
+        .fan-line { display: flex; justify-content: space-between; gap: 6px; }
+        .fan-in { color: #3b82f6; font-weight: 600; }
+        .fan-out { color: #ef4444; font-weight: 600; }
+        
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 700; text-align: center; }
+        .status-online { background: #dcfce7; color: #15803d; }
+        .status-offline { background: #fee2e2; color: #b91c1c; }
+        
+        .actions { display: flex; gap: 8px; align-items: center; }
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.15s;
+            touch-action: manipulation;
+        }
+        .btn:hover { filter: brightness(0.95); }
+        .btn:active { transform: scale(0.98); }
+        .btn-mode { background: var(--primary); color: white; }
+        .btn-reboot { background: var(--danger); color: white; }
+        .btn-refresh { background: var(--success); color: white; padding: 10px 20px; }
+        .btn-add { background: var(--primary); color: white; }
+        
+        .btn-refresh-one { 
+            background: #e2e8f0; color: #475569; 
+            width: 32px; height: 32px; 
+            display: flex; align-items: center; justify-content: center;
+            padding: 0; border-radius: 50%; border: 1px solid #cbd5e1;
+        }
+        .btn-refresh-one:hover { background: #cbd5e1; }
+        .btn-refresh-one:disabled { opacity: 0.5; cursor: wait; }
+        
+        .pools-section {
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .pools-section h4 { margin-bottom: 10px; color: var(--primary); font-size: 0.9em; display: flex; align-items: center; gap: 6px; }
+        .pools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+        .pool-card {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 10px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .pool-card:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .pool-card.active { background: #f0fdf4; border-color: #86efac; border-left: 3px solid var(--success); }
+        .pool-card.dead { background: #fef2f2; border-color: #fca5a5; opacity: 0.85; }
+        .pool-priority { background: var(--primary); color: white; padding: 3px 8px; border-radius: 5px; font-weight: 700; font-size: 0.8em; min-width: 28px; text-align: center; }
+        .pool-info { min-width: 0; }
+        .pool-url { font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pool-worker { color: #64748b; font-size: 0.85em; margin-top: 2px; }
+        .pool-stats { text-align: right; font-size: 0.85em; white-space: nowrap; }
+        .pool-accepted { color: var(--success); font-weight: 700; }
+        .pool-rejected { color: var(--danger); font-weight: 700; }
+        .pool-status { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: 700; margin-top: 3px; }
+        .status-alive { background: #dcfce7; color: #15803d; }
+        .status-dead { background: #fee2e2; color: #b91c1c; }
+        .copy-hint { font-size: 0.75em; color: #64748b; margin-top: 8px; font-style: italic; }
+        
+        .miner-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #e2e8f0;
+            border-top: 1px solid #cbd5e1;
+        }
+        .miner-details.expanded { max-height: 3000px; }
+        .details-content { 
+            padding: 16px; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 16px; 
+        }
+        
+        .detail-section { 
+            background: #ffffff; 
+            padding: 16px; 
+            border-radius: 10px; 
+            border: 1px solid #cbd5e1;
+            box-shadow: var(--shadow);
+        }
+        .detail-section h4 { 
+            margin: -16px -16px 14px -16px; 
+            padding: 12px 16px; 
+            color: var(--primary); 
+            font-size: 0.95em;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 10px 10px 0 0;
+            font-weight: 700;
+            display: flex; align-items: center; gap: 6px;
+        }
+        
+        .temps-main { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+        .temp-card { text-align: center; padding: 12px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .temp-card.normal { border-color: #86efac; background: #f0fdf4; }
+        .temp-card.warning { border-color: #fde047; background: #fefce8; }
+        .temp-card.critical { border-color: #fca5a5; background: #fef2f2; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .temp-label { font-size: 0.8em; color: #64748b; margin-bottom: 4px; font-weight: 600; }
+        .temp-value { font-size: 1.8em; font-weight: 800; }
+        .temp-card.normal .temp-value { color: #15803d; }
+        .temp-card.warning .temp-value { color: #b45309; }
+        .temp-card.critical .temp-value { color: #dc2626; }
+        .temp-env { text-align: center; padding: 8px; background: #f8fafc; border-radius: 6px; font-size: 0.9em; border: 1px dashed #cbd5e1; }
+        .temp-env strong { color: var(--primary); }
+        
+        .mini-table { width: 100%; font-size: 0.85em; border-collapse: collapse; }
+        .mini-table th, .mini-table td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .mini-table th { font-weight: 700; color: #64748b; background: #f8fafc; font-size: 0.8em; text-transform: uppercase; }
+        .mini-table tr:last-child td { border-bottom: none; }
+        
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 0.9em; }
+        .info-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted #e2e8f0; }
+        .info-label { color: #64748b; }
+        .info-value { font-weight: 600; }
+        
+        .error-list { list-style: none; }
+        .error-item { padding: 10px; background: #fef2f2; border-left: 3px solid var(--danger); border-radius: 0 6px 6px 0; margin-bottom: 6px; font-size: 0.85em; }
+        .error-code { font-weight: 700; color: var(--danger); margin-right: 6px; }
+        
+        .toggle-icon { display: inline-block; transition: transform 0.2s; margin-right: 6px; font-size: 0.8em; }
+        .miner-card.expanded .toggle-icon { transform: rotate(180deg); }
+        
+        /* Modal */
+        .modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+        .modal-content { background:white; border-radius:12px; max-width:480px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; }
+        .modal-header h3 { margin:0; }
+        .modal-body { padding:20px; }
+        .modal-footer { padding:0 20px 20px; }
+        .close-btn { background:none; border:none; font-size:1.5em; cursor:pointer; color:#64748b; }
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; margin-bottom:6px; font-weight:500; }
+        .form-group input { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; }
+        .error-msg { color:var(--danger); font-size:0.9em; text-align:center; margin-top:8px; }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.2em; }
+            .miner-header { 
+                grid-template-columns: 1fr 1fr; 
+                grid-template-areas: "name status" "stats stats" "actions actions";
+                gap: 10px;
+            }
+            .miner-name { grid-area: name; }
+            .status-badge { grid-area: status; justify-self: end; }
+            .stats-row { grid-area: stats; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .stat-badge { padding: 6px 4px; }
+            .actions { grid-area: actions; justify-content: space-between; width: 100%; }
+            
+            .details-content { grid-template-columns: 1fr !important; gap: 12px; padding: 12px; }
+            .detail-section { box-shadow: var(--shadow-lg); border-color: #94a3b8; margin-bottom: 4px; }
+            .detail-section h4 { font-size: 1em; padding: 10px 12px; }
+            .temps-main { grid-template-columns: 1fr; gap: 8px; }
+            .temp-card { padding: 10px; }
+            .temp-value { font-size: 1.6em; }
+            .info-grid { grid-template-columns: 1fr; }
+            .pools-grid { grid-template-columns: 1fr; }
+            .group-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .group-stats { align-self: flex-end; }
+            .action-bar { flex-direction:column; }
+            .btn-refresh, .btn-add { width:100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        ⛏️ Whatsminer Manager 
+        <span class="subtitle">API v3.0.x</span>
+        <a href="/logout" class="btn-logout">🚪 Выйти</a>
+    </h1>
+    
+    <div class="action-bar">
+        <button class="btn btn-refresh" onclick="refreshAll()">🔄 Обновить все</button>
+        <button class="btn btn-add" onclick="openAddModal()">➕ Добавить майнер</button>
+    </div>
+    
+    <div id="miners-list"></div>
+</div>
+
+<!-- Modal: Add Miner -->
+<div id="add-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>➕ Добавить майнер</h3>
+            <button class="close-btn" onclick="closeAddModal()">&times;</button>
+        </div>
+        <form id="add-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="miner-id">Имя/Метка *</label>
+                    <input type="text" id="miner-id" required placeholder="Майнер 1">
+                </div>
+                <div class="form-group">
+                    <label for="miner-ip">IP-адрес *</label>
+                    <input type="text" id="miner-ip" required placeholder="192.168.1.34">
+                </div>
+                <div class="form-group">
+                    <label for="miner-pass">Пароль майнера, пользователя super*</label>
+                    <input type="password" id="miner-pass" required placeholder="super">
+                </div>
+                <div class="form-group">
+                    <label for="miner-group">Группа/Адрес</label>
+                    <input type="text" id="miner-group" placeholder="ул. Пушкина, дом Колотушкина">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div id="add-error" class="error-msg"></div>
+                <button type="submit" class="btn btn-add" style="width:100%">Добавить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Debug -->
+<div id="debug-modal" class="modal">
+    <div class="modal-content" style="max-width:90vw; width:800px;">
+        <div class="modal-header">
+            <h3>🐞 Debug: <span id="debug-id"></span></h3>
+            <button class="close-btn" onclick="closeDebugModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height:60vh; overflow:auto; background:#1e293b; color:#e2e8f0; padding:16px;">
+            <pre id="debug-content" style="margin:0; font-family:Consolas,monospace; font-size:0.85em; white-space:pre-wrap;"></pre>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="copyDebug()" style="background:#2563eb;color:white">📋 Копировать JSON</button>
+            <button class="btn" onclick="closeDebugModal()" style="background:#e2e8f0;color:#475569;margin-left:8px">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const expandedMiners = new Set();
+    const fmt = {
+        hash: (v) => (!v || v === 'N/A') ? 'N/A' : `${parseFloat(v).toFixed(1)} TH/s`,
+        power: (v) => v ? `${Math.round(v)}W` : '—',
+        temp: (v) => (v !== undefined && v !== null) ? `${Math.round(v)}°C` : '—',
+        uptime: (sec) => { if(!sec) return '—'; return `${Math.floor(sec/3600)}ч ${Math.floor((sec%3600)/60)}м`; },
+        tempClass: (t) => (!t && t!==0) ? 'normal' : t>=80 ? 'critical' : t>=70 ? 'warning' : 'normal'
+    };
+
+    function copyToClipboard(text) { navigator.clipboard.writeText(text); }
+    
+    function toggleMiner(id) {
+        const details = document.getElementById(`details-${id}`);
+        const card = details?.closest('.miner-card');
+        if(details && card) {
+            const isExpanded = details.classList.toggle('expanded');
+            card.classList.toggle('expanded', isExpanded);
+            isExpanded ? expandedMiners.add(id) : expandedMiners.delete(id);
+        }
+    }
+
+    function toggleGroup(header) {
+        header.classList.toggle('collapsed');
+        const content = header.nextElementSibling;
+        content.classList.toggle('collapsed');
+    }
+
+    function createMinerCard(id, dev) {
+        const hasErrors = dev.error_count > 0;
+        return `
+        <div class="miner-card ${hasErrors ? 'has-errors' : ''}" data-id="${id}">
+            <div class="miner-header" onclick="toggleMiner('${id}')">
+                <div class="miner-name"><span class="toggle-icon">▼</span>${id}<small>${dev.ip} • ${dev.miner_type||'Unknown'}</small></div>
+                <div class="stats-row">
+                    <div class="stat-badge"><span class="label">Hash</span><span class="value">${fmt.hash(dev.hashrate)}</span></div>
+                    <div class="stat-badge"><span class="label">Вент.</span>
+                        <div class="fans-display"><div class="fan-line"><span class="fan-in">In: ${dev.fan_in||0}</span></div><div class="fan-line"><span class="fan-out">Out: ${dev.fan_out||0}</span></div></div>
+                    </div>
+                    <div class="stat-badge"><span class="label">Потр.</span><span class="value">${fmt.power(dev.power_realtime)}</span></div>
+                </div>
+                <div><span class="status-badge ${dev.status==='online'?'status-online':'status-offline'}">${dev.status.toUpperCase()}</span></div>
+                <div class="actions" onclick="event.stopPropagation()">
+                    <button class="btn btn-refresh-one" onclick="refreshDevice('${id}')" title="Обновить">🔄</button>
+                    <button class="btn btn-refresh-one" onclick="showDebug('${id}')" title="Debug" style="background:#fef3c7;border-color:#fde047;margin-left:4px">🐞</button>
+                    <select class="btn btn-mode" onchange="changeMode('${id}', this.value)" ${dev.status!=='online'?'disabled':''}>
+                        <option value="low" ${dev.mode==='low'?'selected':''}>🌙 Low</option>
+                        <option value="normal" ${dev.mode==='normal'?'selected':''}> Normal</option>
+                        <option value="high" ${dev.mode==='high'?'selected':''}> High</option>
+                    </select>
+                    <button class="btn btn-reboot" onclick="rebootMiner('${id}')" ${dev.status!=='online'?'disabled':''}>↻</button>
+                    <button class="btn btn-reboot" onclick="deleteMiner('${id}')" title="Удалить" style="background:#64748b">🗑️</button>
+                </div>
+            </div>
+            
+            ${dev.pools?.length ? `
+            <div class="pools-section">
+                <h4>🔗 Пулы ${dev.pools.length ? `(${dev.pools.length})` : ''}</h4>
+                <div class="pools-grid">
+                    ${dev.pools.map(p => `
+                        <div class="pool-card ${p.status==='Alive'?'active':'dead'}" onclick="copyToClipboard('${p.url}')">
+                            <div class="pool-priority">#${p.priority+1}</div>
+                            <div class="pool-info"><div class="pool-url" title="${p.url}">${p.url}</div><div class="pool-worker">👤 ${p.user||'—'}</div></div>
+                            <div class="pool-stats"><div><span class="pool-accepted">✓${p.accepted||0}</span> / <span class="pool-rejected">✗${p.rejected||0}</span></div><div class="pool-status ${p.status==='Alive'?'status-alive':'status-dead'}">${p.status}</div></div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="copy-hint">💡 Клик по пулу копирует URL</div>
+            </div>` : ''}
+            
+            <div class="miner-details" id="details-${id}">
+                <div class="details-content">
+                    <div class="detail-section">
+                        <h4>🌡️ Температуры</h4>
+                        ${dev.board_temps?.length ? `<div class="temps-main">${dev.board_temps.map((t,i)=>`<div class="temp-card ${fmt.tempClass(t)}"><div class="temp-label">Плата #${i+1}</div><div class="temp-value">${t}°C</div></div>`).join('')}</div>` : ''}
+                        <div class="temp-env">🌍 Среда: <strong>${fmt.temp(dev.temp_env)}</strong></div>
+                    </div>
+                    <div class="detail-section">
+                        <h4>ℹ️ Информация</h4>
+                        <div class="info-grid">
+                            <div class="info-item"><span class="info-label">Тип</span><span class="info-value">${dev.miner_type||'—'}</span></div>
+                            <div class="info-item"><span class="info-label">FW</span><span class="info-value">${dev.fw_version||'—'}</span></div>
+                            <div class="info-item"><span class="info-label">S/N</span><span class="info-value">${dev.miner_sn||'—'}</span></div>
+                            <div class="info-item"><span class="info-label">MAC</span><span class="info-value">${dev.mac||'—'}</span></div>
+                            <div class="info-item"><span class="info-label">Режим</span><span class="info-value">${dev.mode?.toUpperCase()||'—'}</span></div>
+                            <div class="info-item"><span class="info-label">Аптайм</span><span class="info-value">${fmt.uptime(dev.uptime)}</span></div>
+                        </div>
+                        ${dev.boards?.length ? `
+                        <h4 style="margin:14px 0 8px;font-size:0.9em;color:#475569;border-bottom:1px solid #e2e8f0;padding-bottom:6px"> Платы</h4>
+                        <table class="mini-table">
+                            <thead><tr><th>#</th><th>PCB S/N</th><th>Чипы</th><th>Темп.</th></tr></thead>
+                            <tbody>${dev.boards.map((b,i)=>`<tr><td>${b.id??i+1}</td><td title="${dev.board_pcb_sns?.[i]||''}">${dev.board_pcb_sns?.[i]?.slice(0,14)||'—'}</td><td>${b.chips||'—'}</td><td>${b.temp_avg?Math.round(b.temp_avg)+'°C':(dev.board_temps[i]?dev.board_temps[i]+'°C':'—')}</td></tr>`).join('')}</tbody>
+                        </table>` : ''}
+                    </div>
+                    <div class="detail-section">
+                        <h4>⚠️ Ошибки (${dev.error_count})</h4>
+                        ${hasErrors ? `<ul class="error-list">${dev.errors.map(e=>`<li class="error-item"><span class="error-code">${e.code}</span>${e.desc}</li>`).join('')}</ul>` : '<p style="color:var(--success);text-align:center;padding:16px">✓ Чисто</p>'}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // Modal functions
+    function openAddModal() { document.getElementById('add-modal').style.display = 'flex'; }
+    function closeAddModal() { 
+        document.getElementById('add-modal').style.display = 'none'; 
+        document.getElementById('add-form').reset(); 
+        document.getElementById('add-error').textContent = ''; 
+    }
+    
+    function showDebug(id) {
+        document.getElementById('debug-id').textContent = id;
+        document.getElementById('debug-modal').style.display = 'flex';
+        document.getElementById('debug-content').textContent = 'Loading...';
+        
+        fetch(`/api/debug/${id}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('debug-content').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(e => {
+                document.getElementById('debug-content').textContent = 'Error: ' + e.message;
+            });
+    }
+    
+    function closeDebugModal() { document.getElementById('debug-modal').style.display = 'none'; }
+    
+    function copyDebug() {
+        const text = document.getElementById('debug-content').textContent;
+        navigator.clipboard.writeText(text);
+    }
+
+    // Form submit
+    document.getElementById('add-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const err = document.getElementById('add-error');
+        err.textContent = ''; btn.disabled = true; btn.textContent = '⏳ Проверка...';
+        
+        try {
+            const res = await fetch('/api/miners', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    id: document.getElementById('miner-id').value,
+                    ip: document.getElementById('miner-ip').value,
+                    password: document.getElementById('miner-pass').value,
+                    group: document.getElementById('miner-group').value || 'Без группы'
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeAddModal();
+                refreshAll();
+            } else {
+                err.textContent = '❌ ' + (data.error || 'Ошибка');
+            }
+        } catch (e) {
+            err.textContent = '❌ Ошибка сети: ' + e.message;
+        } finally {
+            btn.disabled = false; btn.textContent = 'Добавить';
+        }
+    });
+
+    async function refreshDevice(id) {
+        const card = document.querySelector(`.miner-card[data-id="${id}"]`);
+        const btn = card?.querySelector('.btn-refresh-one');
+        if(!btn || btn.disabled) return;
+        const wasExpanded = card.classList.contains('expanded');
+        btn.disabled = true; btn.innerHTML = '';
+        try {
+            const res = await fetch('/api/status');
+            if(!res.ok) throw new Error('Server error');
+            const devices = await res.json();
+            const dev = devices.find(d => d.id === id);
+            if(dev) {
+                const temp = document.createElement('div');
+                temp.innerHTML = createMinerCard(id, dev);
+                card.replaceWith(temp.firstElementChild);
+                if(wasExpanded) {
+                    const nc = document.querySelector(`.miner-card[data-id="${id}"]`);
+                    nc.classList.add('expanded');
+                    nc.querySelector('.miner-details').classList.add('expanded');
+                }
+            }
+        } catch(e) { alert('❌ '+e.message); }
+        finally { if(btn) { btn.disabled=false; btn.innerHTML='🔄'; } }
+    }
+
+    async function refreshAll() {
+        const list = document.getElementById('miners-list');
+        list.innerHTML = '<p style="text-align:center;padding:30px;color:#64748b">🔄 Загрузка...</p>';
+        try {
+            const res = await fetch('/api/status');
+            if(!res.ok) throw new Error('Server error');
+            const devices = await res.json();
+            list.innerHTML = '';
+
+            const groups = {};
+            devices.forEach(dev => {
+                const g = dev.group || "Без группы";
+                if(!groups[g]) groups[g] = [];
+                groups[g].push(dev);
+            });
+
+            for(const [groupName, devs] of Object.entries(groups)) {
+                const totalHash = devs.reduce((sum, d) => sum + (parseFloat(d.hashrate) || 0), 0).toFixed(1);
+                const groupEl = document.createElement('div');
+                groupEl.className = 'location-group';
+                groupEl.innerHTML = `
+                    <div class="group-header" onclick="toggleGroup(this)">
+                        <span class="group-name">📍 ${groupName}</span>
+                        <span class="group-stats">${devs.length} шт. | ${totalHash} TH/s</span>
+                        <span class="group-toggle">▼</span>
+                    </div>
+                    <div class="group-content">
+                        ${devs.map(d => createMinerCard(d.id, d)).join('')}
+                    </div>
+                `;
+                list.appendChild(groupEl);
+            }
+        } catch(e) { list.innerHTML = `<p style="text-align:center;padding:30px;color:var(--danger)">❌ ${e.message}</p>`; }
+    }
+
+    async function changeMode(id, mode) {
+        try {
+            const res = await fetch(`/api/device/${id}/mode`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode})});
+            const d = await res.json();
+            alert(d.success ? '✅ OK' : '❌ '+d.error);
+            refreshDevice(id);
+        } catch(e) { alert('❌ '+e.message); }
+    }
+    
+    async function rebootMiner(id) {
+        if(!confirm(`Перезагрузить "${id}"?`)) return;
+        try {
+            const res = await fetch(`/api/device/${id}/reboot`, {method:'POST'});
+            const d = await res.json();
+            alert(d.success ? '🔌 OK' : ' '+d.error);
+            refreshDevice(id);
+        } catch(e) { alert('❌ '+e.message); }
+    }
+
+    async function deleteMiner(id) {
+        if(!confirm(`Удалить "${id}" из мониторинга?`)) return;
+        try {
+            const res = await fetch(`/api/miners/${id}`, {method:'DELETE'});
+            const d = await res.json();
+            alert(d.success ? '✅ Удалён' : '❌ '+d.error);
+            refreshAll();
+        } catch(e) { alert('❌ '+e.message); }
+    }
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(m => {
+        m.addEventListener('click', (e) => { if(e.target === m) m.style.display = 'none'; });
+    });
+
+    refreshAll();
+</script>
+</body>
+</html>
