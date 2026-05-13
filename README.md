@@ -15,5 +15,8 @@
 
 ### 1. Клонируйте репозиторий
 ```bash
-git clone https://github.com/yourusername/whatsminer-manager.git
+git clone https://github.com/Fizeratorz/whatsminer-manager.git
 cd whatsminer-manager
+
+# 2. Соберите и запустите контейнер в фоне
+docker compose up -d --build
