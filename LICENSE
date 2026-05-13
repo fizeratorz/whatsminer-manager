@@ -1,33 +1,21 @@
+MIT License
 
----
+Copyright (c) 2026 Fizeratorz
 
-## 🚀 Пошаговая публикация на GitHub
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-### 1. Создайте репозиторий на GitHub
-- Зайдите на [github.com/new](https://github.com/new)
-- Name: `whatsminer-manager`
-- Public/Private — на ваш выбор
-- ✅ Добавьте `.gitignore: Python`
-- ✅ Добавьте `License: MIT`
-- Нажмите **Create repository**
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-### 2. Подготовьте локальный проект
-```bash
-# Перейдите в папку проекта
-cd /путь/к/whatsminer-manager
-
-# Инициализируйте git (если ещё не инициализирован)
-git init
-
-# Добавьте все файлы
-git add .
-
-# Первый коммит
-git commit -m "Initial commit: Whatsminer Manager v1.0"
-
-# Привяжите удалённый репо (замените YOUR_USERNAME)
-git remote add origin https://github.com/fizeratorz/whatsminer-manager.git
-
-# Запушьте
-git branch -M main
-git push -u origin main
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
