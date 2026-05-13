@@ -1,0 +1,1 @@
+# whatsminer-manager
